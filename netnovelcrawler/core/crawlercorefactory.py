@@ -1,5 +1,5 @@
 CRAWLER_CORES = {
-    "www.ciweimao.com": ("netnovelcrawler.core.hbooker", "HBookerCrawlerCore", "http://www.ciweimao.com/signup/login"),
+    "www.ciweimao.com": ("netnovelcrawler.core.hbooker", "HBookerCrawlerCore", "https://www.ciweimao.com/signup/login"),
     "book.sfacg.com": ("netnovelcrawler.core.sfacg", "SfAcgCrawlerCore", "https://passport.sfacg.com/Login.aspx"),
     "m.yeduku.net": ("netnovelcrawler.core.yeduku", "YedukuCrawlerCore", ""),
     "www.dingdianks.com": ("netnovelcrawler.core.dingdianks_com", "DingdianKsComCrawlerCore", ""),

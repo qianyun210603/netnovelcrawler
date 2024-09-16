@@ -1,11 +1,18 @@
 ## 爬取小说网站并生成TXT
 
-目前支持
-- 欢乐书客/刺猬猫
-- sf轻小说
+### 目前支持
+- [夜读库](https://m.yeduku.net)
+- [顶点小说](https://www.dingdianks.com)
+- [笔趣阁](https://www.22biqu.com)
+- [~~欢乐书客/刺猬猫~~](https://www.ciweimao.com)
+- [~~sf轻小说~~](https://book.sfacg.com)
 
-用法：
+### 安装
 
+
+### 用法
+
+#### CLI
 ```python
 config = (
     r'D:\net_novels\crawler_ocr\lord',
@@ -23,6 +30,12 @@ from netnovelcrawler.utils.starter_stopper import AfterChapterStarter, CountStop
 mycrawler = Crawler(*config)
 mycrawler.crawl(starter=AfterChapterStarter("10. 某章节"), stopper=CountStopper(50))
 ```
+
+#### GUI
+```bash
+python -m netnovelcrawlertaskmgr
+```
+
 
 #### 绕过滑块验证反爬虫机制
 

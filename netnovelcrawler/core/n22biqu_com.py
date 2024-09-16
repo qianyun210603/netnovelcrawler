@@ -86,4 +86,6 @@ class n22BiquComCrawlerCore(HttpEngine, CatalogCrawlerBase):
 
     def _clean_up_text(self, text):
         text = re.sub(r"((\n *)|(\r))\xa0\xa0\xa0\xa0 ?", "\n\u3000\u3000", text)
+        text = text.replace("&quot;", "")
+        text = re.sub(r"（）\n[　 ]*", "", text)
         return text
