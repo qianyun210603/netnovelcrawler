@@ -1,0 +1,13 @@
+crawlertest.ipynb
+*.ipynb
+*.log
+.vscode/
+__pycache__/
+*.json
+.pylintrc
+.idea/
+netnovelcrawlertaskmgr/crawling_tasks.yaml
+*.ttf
+*.xml
+
+
