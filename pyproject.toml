@@ -39,7 +39,7 @@ gui = ["PyQt6"]
 mgrui = "netnovelcrawlertaskmgr:run_mgr"
 
 [tool.setuptools]
-packages = ["crawler", "crawlertaskmgr"]
+packages = ["netnovelcrawler", "netnovelcrawlertaskmgr"]
 
 [tool.setuptools_scm]
 

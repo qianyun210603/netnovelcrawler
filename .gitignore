@@ -9,5 +9,6 @@ __pycache__/
 netnovelcrawlertaskmgr/crawling_tasks.yaml
 *.ttf
 *.xml
-
+dist/
+*.egg-info/
 
