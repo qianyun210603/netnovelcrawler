@@ -33,8 +33,13 @@ class n22BiquComCrawlerCore(HttpEngine, CatalogCrawlerBase):
         while True:
             catalog_page_html = self.session.get(catalog_page).text
             catalog_page_soup = BeautifulSoup(catalog_page_html, "html.parser")
-            uls = catalog_page_soup.find_all("ul", attrs={"class": "section-list fix"})
-            if not uls:
+            uls = None
+            for i in range(6):
+                uls = catalog_page_soup.find_all("ul", attrs={"class": "section-list fix"})
+                if uls:
+                    break
+                time.sleep(3)
+            else:
                 break
             ul = uls[-1]
             catalog_node_list = ul.find_all("a")

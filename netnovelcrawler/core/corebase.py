@@ -57,6 +57,7 @@ class CatalogCrawlerBase(CrawlerBase):
     def crawl(self, sleep: float = 1, starter: Callable[[dict], bool] = None, stopper: Callable[[dict], bool] = None):
         all_chapters = self._parse_catalog(self.start_page)
         chapters_status = self._get_status()
+        all_chapters = [chapter for chapter in all_chapters if not chapters_status.get(chapter["title"], False)]
         prev_no_content = False
         self._set_reading_config()
         with open(self.text_file, "a", encoding="utf-8") as out_file:
@@ -67,9 +68,8 @@ class CatalogCrawlerBase(CrawlerBase):
             try:
                 with tqdm(total=len(all_chapters)) as pbar:
                     for chapter_info in all_chapters:
-                        if chapters_status.get(chapter_info["title"], False):
-                            continue
                         if starter is not None and not starter(chapter_info):
+                            pbar.update(1)
                             continue
                         if stopper is not None and stopper(chapter_info):
                             break
