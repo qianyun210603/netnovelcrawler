@@ -106,11 +106,12 @@ class TaskFrame(QtWidgets.QFrame):
         self.cleanup_progress_bar()
         self.tqdm_update_receiver._active = False
         self.tqdm_update_receiver.deleteLater()
-
         self.allow_all()
         self.worker.deleteLater()
         self.thread_tqdm_update_queue_listener.quit()
+        self.thread_tqdm_update_queue_listener.wait()
         self.thread.quit()
+        self.thread.wait()
 
     def cleanup_progress_bar(self):
         if self.progress_bar is not None:
