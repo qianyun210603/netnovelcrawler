@@ -1,5 +1,4 @@
 from netnovelcrawler import Crawler
-from netnovelcrawler.utils.starter_stopper import CountStopper
 
 configs = (
     (

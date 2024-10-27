@@ -8,9 +8,8 @@
 from queue import Queue, Empty
 from typing import Callable, Any
 
-# from PyQt5 import QtTest
-from PyQt6.QtCore import pyqtSignal, pyqtSlot, QObject, Qt
-from PyQt6.QtWidgets import QProgressBar
+from PySide6.QtCore import Signal, Slot, QObject, Qt
+from PySide6.QtWidgets import QProgressBar
 
 __CONFIGURED = False
 
@@ -112,14 +111,14 @@ def perform_tqdm_pyqt_hack(tqdm_update_queue: Queue):
 
 
 class TQDMDataQueueReceiver(QObject):
-    s_tqdm_object_received_signal = pyqtSignal(object)
+    s_tqdm_object_received_signal = Signal(object)
 
     def __init__(self, q: Queue, *args, **kwargs):
         QObject.__init__(self, *args, **kwargs)
         self.queue = q
         self._active = False
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         self._active = True
         while self._active:
@@ -131,7 +130,7 @@ class TQDMDataQueueReceiver(QObject):
 
 
 class QTQDMProgressBar(QProgressBar):
-    def __init__(self, name: Any, tqdm_signal: pyqtSignal, parent=None):
+    def __init__(self, name: Any, tqdm_signal: Signal, parent=None):
         super(QTQDMProgressBar, self).__init__(parent)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setVisible(True)
@@ -160,7 +159,7 @@ class QTQDMProgressBar(QProgressBar):
         total = e.get("total", 0)
         n = e.get("n", -1)
         desc = e.get("prefix", None)
-        text = e.get("text", None)
+        text = e.get("text", "")
         do_close = e.get("close", False)  # different from do_reset, we want visible=false
         if do_reset:
             self.reset()
@@ -179,15 +178,15 @@ class QTQDMProgressBar(QProgressBar):
 
 
 class LongProcedureWorker(QObject):
-    started = pyqtSignal(bool)
-    finished = pyqtSignal(bool)
+    started = Signal(bool)
+    finished = Signal(bool)
 
     def __init__(self, identifier: Any, func: Callable):
         super(LongProcedureWorker, self).__init__()
         self.id = identifier
         self.func = func
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         self.started.emit(True)
         self.func()

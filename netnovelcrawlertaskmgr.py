@@ -3,7 +3,7 @@
 # @Author  : YQ Tsui
 # @File    : netnovelcrawlertaskmgr.py
 # @Purpose :
-from PyQt6 import QtWidgets
+from PySide6 import QtWidgets
 from netnovelcrawlertaskmgr.taskmgr import TaskMgr
 from netnovelcrawlertaskmgr.taskmgrui import TasksWindow
 import sys

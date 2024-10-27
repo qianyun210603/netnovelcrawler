@@ -9,7 +9,7 @@ import copy
 from .taskmgr import TaskMgr
 from netnovelcrawler import Crawler
 
-from PyQt6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtCore, QtGui
 from .tqdm_pyqt import QTQDMProgressBar, setup_tqdm_pyqt, LongProcedureWorker
 
 
@@ -76,7 +76,7 @@ class TaskFrame(QtWidgets.QFrame):
             defaultButton=QtWidgets.QMessageBox.StandardButton.NoButton,
         )
 
-    @QtCore.pyqtSlot()
+    @QtCore.Slot()
     def run_task(self):
 
         self.thread_tqdm_update_queue_listener = QtCore.QThread()
