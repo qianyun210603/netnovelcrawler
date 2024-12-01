@@ -15,12 +15,13 @@ from .tqdm_pyqt import QTQDMProgressBar, setup_tqdm_pyqt, LongProcedureWorker
 
 class TaskFrame(QtWidgets.QFrame):
 
-    def __init__(self, task_info: dict, parent=None):
+    def __init__(self, name: str, task_info: dict, tasks_mgr: TaskMgr, parent=None):
         super(TaskFrame, self).__init__(parent)
+        self.tasks_mgr = tasks_mgr
         task_info = copy.deepcopy(task_info)
-        self.name: str = task_info.pop("name")
-        self.path: str = task_info.pop("path")
-        self.start_page: str = task_info.pop("start_page")
+        self.name: str = name
+        self.path: str = task_info["path"]
+        self.start_page: str = task_info["start_page"]
         self.task_configs: dict = task_info
         self.init_ui()
         self.thread = None
@@ -42,8 +43,10 @@ class TaskFrame(QtWidgets.QFrame):
         """
         )  # Set card-like appearance
 
-        info_str = f"书名：{self.name}\n目录页：{self.start_page}\n工作路径：{self.path}"
-        info_label = QtWidgets.QLabel(info_str, parent=self)
+        info_str = (
+            f"书名：{self.name}\n目录页：{self.task_configs['start_page']}\n工作路径：{self.task_configs['path']}"
+        )
+        self.info_label = QtWidgets.QLabel(info_str, parent=self)
 
         self.start_button = QtWidgets.QPushButton("\u25B6", parent=self)
         self.start_button.clicked.connect(self.run_task)
@@ -59,7 +62,7 @@ class TaskFrame(QtWidgets.QFrame):
         vbox_btn.addWidget(other_config_button)
 
         hbox = QtWidgets.QHBoxLayout()
-        hbox.addWidget(info_label)
+        hbox.addWidget(self.info_label)
         hbox.addLayout(vbox_btn)
 
         self.vbox = QtWidgets.QVBoxLayout()
@@ -67,14 +70,17 @@ class TaskFrame(QtWidgets.QFrame):
         self.setLayout(self.vbox)
 
     def show_configs(self):
-        config_str = "\n".join(f"{fname}: {fvalue}" for fname, fvalue in self.task_configs.items())
-        QtWidgets.QMessageBox.information(
-            self,
-            "任务设置",
-            config_str,
-            buttons=QtWidgets.QMessageBox.StandardButton.NoButton,
-            defaultButton=QtWidgets.QMessageBox.StandardButton.NoButton,
+        config_editor = ConfigEditor(self.name, self.task_configs)
+        if config_editor.exec() == QtWidgets.QDialog.DialogCode.Accepted:
+            name, task_info = config_editor.get_task_info()
+            self.tasks_mgr.update_task(name, task_info)
+            self.update_by_config()
+
+    def update_by_config(self):
+        info_str = (
+            f"书名：{self.name}\n目录页：{self.task_configs['start_page']}\n工作路径：{self.task_configs['path']}"
         )
+        self.info_label.setText(info_str)
 
     @QtCore.Slot()
     def run_task(self):
@@ -90,7 +96,8 @@ class TaskFrame(QtWidgets.QFrame):
         self.progress_bar = QTQDMProgressBar(
             name=self.name, tqdm_signal=self.tqdm_update_receiver.s_tqdm_object_received_signal, parent=self
         )
-        self.crawler = Crawler(self.path, self.start_page, self.name + ".txt", **self.task_configs)
+
+        self.crawler = Crawler(work_dir=self.task_configs["path"], text_file=self.name + ".txt", **self.task_configs)
         self.worker = LongProcedureWorker(identifier=self.name, func=self.crawler.crawl)
         self.vbox.addWidget(self.progress_bar)
         self.thread = QtCore.QThread()
@@ -139,12 +146,13 @@ class ConfigEditor(QtWidgets.QDialog):
         "OCR": "ocr",
     }
 
-    def __init__(self, task_info: dict = None):
+    def __init__(self, name: str = None, task_info: dict = None):
         super(ConfigEditor, self).__init__()
+        self.name = name
         if task_info is not None and not (
-            isinstance(task_info, dict) and "name" in task_info and "path" in task_info and "start_page" in task_info
+            isinstance(task_info, dict) and "path" in task_info and "start_page" in task_info
         ):
-            raise ValueError("task_info must be a dict with keys 'name', 'path' and 'start_page'")
+            raise ValueError("task_info must be a dict with keys 'path' and 'start_page'")
 
         self.task_info = {} if task_info is None else task_info
         self.init_ui()
@@ -155,23 +163,29 @@ class ConfigEditor(QtWidgets.QDialog):
 
         vbox = QtWidgets.QVBoxLayout()
 
-        if not self.task_info:
-            label_name = QtWidgets.QLabel("书名：")
-            self.textedit_name = QtWidgets.QLineEdit()
-            label_path = QtWidgets.QLabel("工作路径：")
-            self.textedit_path = QtWidgets.QLineEdit()
-            label_start_page = QtWidgets.QLabel("目录页：")
-            self.textedit_start_page = QtWidgets.QLineEdit()
-            grid_layout = QtWidgets.QGridLayout()
-            grid_layout.addWidget(label_name, 0, 0)
-            grid_layout.addWidget(self.textedit_name, 0, 1)
-            grid_layout.addWidget(label_path, 1, 0)
-            grid_layout.addWidget(self.textedit_path, 1, 1)
-            grid_layout.addWidget(label_start_page, 2, 0)
-            grid_layout.addWidget(self.textedit_start_page, 2, 1)
-            vbox.addLayout(grid_layout)
+        grid_layout = QtWidgets.QGridLayout()
+        label_name = QtWidgets.QLabel("书名：")
+        self.textedit_name = QtWidgets.QLineEdit()
+        if self.name is not None:
+            self.textedit_name.setText(self.name)
+            self.textedit_name.setDisabled(True)
+        grid_layout.addWidget(label_name, 0, 0)
+        grid_layout.addWidget(self.textedit_name, 0, 1)
+        label_path = QtWidgets.QLabel("工作路径：")
+        self.textedit_path = QtWidgets.QLineEdit()
+        if self.task_info:
+            self.textedit_path.setText(self.task_info.get("path", ""))
+        label_start_page = QtWidgets.QLabel("目录页：")
+        self.textedit_start_page = QtWidgets.QLineEdit()
+        if self.task_info:
+            self.textedit_start_page.setText(self.task_info.get("start_page", ""))
+        grid_layout.addWidget(label_path, 1, 0)
+        grid_layout.addWidget(self.textedit_path, 1, 1)
+        grid_layout.addWidget(label_start_page, 2, 0)
+        grid_layout.addWidget(self.textedit_start_page, 2, 1)
+        vbox.addLayout(grid_layout)
 
-        need_login = self.task_info.get("need_login", True)
+        need_login = self.task_info.get("need_login", False)
         if need_login:
             self.need_login_label = QtWidgets.QLabel("需要登录")
             self.need_login_cb = QtWidgets.QCheckBox()
@@ -227,24 +241,24 @@ class ConfigEditor(QtWidgets.QDialog):
 
     def get_task_info(self):
         task_info = {}
-        if not self.task_info:
-            task_info["name"] = self.textedit_name.text()
-            task_info["path"] = self.textedit_path.text()
-            task_info["start_page"] = self.textedit_start_page.text()
-        else:
-            task_info.update(self.task_info)
-        if self.need_login_cb.isChecked():
+        name = self.task_info.get("name", self.textedit_name.text())
+
+        task_info["path"] = self.textedit_path.text()
+        task_info["start_page"] = self.textedit_start_page.text()
+
+        if hasattr(self, "need_login_cb") and self.need_login_cb.isChecked():
             task_info["need_login"] = True
             task_info["login_info"] = (self.username_edit.text(), self.password_edit.text())
         else:
             task_info["need_login"] = False
 
-        image_process_method = self.IMAGE_PROCESS_MAP[self.image_handler_cb.currentText()]
-        if image_process_method != "none":
-            task_info["image_process"] = image_process_method
-            task_info["image_folder"] = self.image_folder_edit.text()
+        if hasattr(self, "image_handler_cb"):
+            image_process_method = self.IMAGE_PROCESS_MAP[self.image_handler_cb.currentText()]
+            if image_process_method != "none":
+                task_info["image_process"] = image_process_method
+                task_info["image_folder"] = self.image_folder_edit.text()
 
-        return task_info
+        return name, task_info
 
 
 class TasksWindow(QtWidgets.QMainWindow):
@@ -272,8 +286,8 @@ class TasksWindow(QtWidgets.QMainWindow):
         self.gbox = QtWidgets.QGridLayout()
         container: QtWidgets.QWidget = QtWidgets.QWidget(parent=scroll_area)
 
-        for idx, task_info in enumerate(self.tasks_mgr.task_list):
-            task_frame = TaskFrame(task_info, parent=container)
+        for idx, (name, task_info) in enumerate(self.tasks_mgr.task_dict.items()):
+            task_frame = TaskFrame(name, task_info, self.tasks_mgr, parent=container)
             self.gbox.addWidget(task_frame, idx // 2, idx % 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         container.setLayout(self.gbox)
@@ -288,8 +302,8 @@ class TasksWindow(QtWidgets.QMainWindow):
     def add_task(self):
         config_editor = ConfigEditor()
         if config_editor.exec() == QtWidgets.QDialog.DialogCode.Accepted:
-            task_info = config_editor.get_task_info()
-            self.tasks_mgr.add_task(task_info)
-            task_frame = TaskFrame(task_info, parent=self.centralWidget().widget())
+            name, task_info = config_editor.get_task_info()
+            self.tasks_mgr.add_task(name, task_info)
+            task_frame = TaskFrame(name, task_info, self.task_mgr, parent=self.centralWidget().widget())
             idx = len(self.tasks_mgr.task_list) - 1
             self.gbox.addWidget(task_frame, idx // 2, idx % 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)

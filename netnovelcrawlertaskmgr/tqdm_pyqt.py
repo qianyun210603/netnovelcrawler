@@ -189,5 +189,7 @@ class LongProcedureWorker(QObject):
     @Slot()
     def run(self):
         self.started.emit(True)
-        self.func()
-        self.finished.emit(True)
+        try:
+            self.func()
+        finally:
+            self.finished.emit(True)
