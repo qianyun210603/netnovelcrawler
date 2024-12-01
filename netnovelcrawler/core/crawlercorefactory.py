@@ -6,4 +6,5 @@ CRAWLER_CORES = {
     "www.22biqu.com": ("netnovelcrawler.core.n22biqu_com", "n22BiquComCrawlerCore", ""),
     "www.duswx.com": ("netnovelcrawler.core.duswx_com", "DuswxComCrawlerCore", ""),
     "www.udikids.com": ("netnovelcrawler.core.udikids_com", "UdikidsComCrawlerCore", ""),
+    "www.5scw.com": ("netnovelcrawler.core.n5scw_com", "n5scwCrawlerCore", ""),
 }
