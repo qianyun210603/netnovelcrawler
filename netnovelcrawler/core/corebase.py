@@ -1,6 +1,5 @@
 import abc
 import os.path
-import pickle
 import time
 import json
 from abc import abstractmethod
@@ -43,21 +42,30 @@ class CatalogCrawlerBase(CrawlerBase):
 
     @staticmethod
     def _get_status():
-        if os.path.exists("status.bin"):
-            with open("status.bin", "rb") as f:
-                return pickle.load(f)
+        if os.path.exists("status.json"):
+            with open("status.json", "r", encoding="utf-8") as f:
+                return json.load(f)
         else:
             return {}
 
     @staticmethod
     def _save_status(status):
-        with open("status.bin", "wb") as f:
-            pickle.dump(status, f)
+        with open("status.json", "w", encoding="utf-8") as f:
+            json.dump(status, f, indent=4)
 
     def crawl(self, sleep: float = 1, starter: Callable[[dict], bool] = None, stopper: Callable[[dict], bool] = None):
         all_chapters = self._parse_catalog(self.start_page)
         chapters_status = self._get_status()
-        all_chapters = [chapter for chapter in all_chapters if not chapters_status.get(chapter["title"], False)]
+        if starter is None:
+            all_chapters = [
+                chapter for chapter in all_chapters if not chapters_status.get(chapter["title"], False)
+            ]
+        else:
+            all_chapters = [
+                chapter for chapter in all_chapters if
+                # starter must be called before chapters_status.get(chapter["title"], False)
+                starter(chapter) and not chapters_status.get(chapter["title"], False)
+            ]
         prev_no_content = False
         self._set_reading_config()
         with open(self.text_file, "a", encoding="utf-8") as out_file:
@@ -69,6 +77,7 @@ class CatalogCrawlerBase(CrawlerBase):
                 with tqdm(total=len(all_chapters)) as pbar:
                     for chapter_info in all_chapters:
                         if starter is not None and not starter(chapter_info):
+                            chapters_status[chapter_info["title"]] = True
                             pbar.update(1)
                             continue
                         if stopper is not None and stopper(chapter_info):

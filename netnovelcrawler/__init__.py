@@ -4,6 +4,7 @@ import pickle
 
 from typing import Callable
 from .core.crawlercorefactory import CRAWLER_CORES
+from .utils.starter_stopper import AfterChapterStarter
 
 
 class Crawler:
@@ -71,12 +72,13 @@ class Crawler:
         with open("config.bin", "wb") as f:
             pickle.dump(config, f)
 
-    def crawl(self, sleep: float = 1, starter: Callable[[dict], bool] = None, stopper: Callable[[dict], bool] = None):
+    def crawl(self, sleep: float = 1, starter: str | Callable[[dict], bool] = None, stopper: Callable[[dict], bool] = None):
         """
         Params:
         ================================================
         sleep: float
         页面刷新间隔时间
         """
-
+        if isinstance(starter, str):
+            starter = AfterChapterStarter(starter)
         self.core.crawl(sleep, starter=starter, stopper=stopper)

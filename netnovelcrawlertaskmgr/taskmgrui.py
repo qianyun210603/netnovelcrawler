@@ -4,8 +4,7 @@
 # @File    : taskmgrui.py
 # @Purpose :
 import copy
-
-
+from functools import partial
 from .taskmgr import TaskMgr
 from netnovelcrawler import Crawler
 
@@ -98,7 +97,10 @@ class TaskFrame(QtWidgets.QFrame):
         )
 
         self.crawler = Crawler(work_dir=self.task_configs["path"], text_file=self.name + ".txt", **self.task_configs)
-        self.worker = LongProcedureWorker(identifier=self.name, func=self.crawler.crawl)
+        if self.task_configs.get("start_from_chapter", None):
+            self.worker = LongProcedureWorker(identifier=self.name, func=partial(self.crawler.crawl, starter=self.task_configs["start_from_chapter"]))
+        else:
+            self.worker = LongProcedureWorker(identifier=self.name, func=self.crawler.crawl)
         self.vbox.addWidget(self.progress_bar)
         self.thread = QtCore.QThread()
         self.worker.moveToThread(self.thread)
@@ -304,6 +306,6 @@ class TasksWindow(QtWidgets.QMainWindow):
         if config_editor.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             name, task_info = config_editor.get_task_info()
             self.tasks_mgr.add_task(name, task_info)
-            task_frame = TaskFrame(name, task_info, self.task_mgr, parent=self.centralWidget().widget())
+            task_frame = TaskFrame(name, task_info, self.tasks_mgr, parent=self.centralWidget().widget())
             idx = len(self.tasks_mgr.task_list) - 1
             self.gbox.addWidget(task_frame, idx // 2, idx % 2, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
